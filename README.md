@@ -13,11 +13,11 @@ In order to run Teqc EasyGUI you need to have Python 3.7.0 or higher installed o
 * numpy
 
 It is best to install these packages through default package installer for Python - pip. To do that you type in command line:
-pip install numpy
-pip install matplotlib
+> pip install numpy
+> pip install matplotlib
 
 Or just:
-pip install -r requirements.txt
+> pip install -r requirements.txt
 
 As complete list of required packages is provided in the file requirements.txt.
 
