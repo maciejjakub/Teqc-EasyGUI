@@ -32,7 +32,7 @@ For further explanations I refer you to teqc documentation:
 * https://www.unavco.org/software/data-processing/teqc/tutorial/tutorial.html
 * https://www.unavco.org/software/data-processing/teqc/doc/UNAVCO_Teqc_Tutorial.pdf
 
-First thing you should do to get started is open file you want to work with. Application is able to recognise and proceess files that teqc enables. It contain native binary files from various GNSS receivers as well as RINEX version 2. The thing that this function actually does is saving path to the file in a variable.
+First thing you should do to get started is open file you want to work with. Application is able to recognise and process files that teqc enables. It contain native binary files from various GNSS receivers as well as RINEX version 2. The thing that this function actually does is saving path to the file in a variable.
 
 In Teqc EasyGUI you can:
 * perform editing of a file:

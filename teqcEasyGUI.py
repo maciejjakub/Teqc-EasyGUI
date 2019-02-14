@@ -29,7 +29,7 @@ class Application(Tk):
         self.menu.add_cascade(label='File', menu=self.subMenu)
         self.subMenu.add_command(label='Open file', command=self.chooseFile)
         self.subMenu.add_separator()
-        self.subMenu.add_command(label='File version check', command=self.czyRinex)
+        self.subMenu.add_command(label='File version check', command=self.isRinex)
         
         self.aboutMenu = Menu(self.menu, tearoff = 0)
         self.menu.add_cascade(label='About', menu=self.aboutMenu)
@@ -346,7 +346,7 @@ class Application(Tk):
         except AttributeError:
             self.attribute_error()
             
-    def czyRinex(self):
+    def isRinex(self):
         try:
             b = subprocess.run('teqc +v ' + self.filename, capture_output=True, encoding='utf-8')
             self.scrltxt.insert(INSERT, b.stderr)
@@ -354,37 +354,42 @@ class Application(Tk):
             self.attribute_error()
         
     def attribute_error(self):
-        print('wykryto błąd!')
+        print('attribute error!')
         tkinter.messagebox.showerror('Warning', 'Please open file first')
         
     def chooseFile(self):
         self.filename = askopenfilename()
         self.filename = self.filename.replace('/', '\\')
-        print(self.filename)
-        check = subprocess.run('teqc ' + self.filename, capture_output=True, encoding='utf-8')
-        while check.stdout == '':
-            if self.filename == '':
-                break
-            else:
-                self.scrltxt.insert(INSERT, check.stderr)
-                tkinter.messagebox.showerror('Warning', 'File not selected or selected in incorrect format')
-                self.filename = askopenfilename()
-                check = subprocess.run('teqc ' + self.filename, capture_output=True, encoding='utf-8')
-        if self.filename != '':
-            self.statusbar["text"] = 'File: ' + self.filename.split('\\')[-1] + ' successfully opened.'
-            
-        print(self.filename)
-        return(self.filename)
+        try:
+            check = subprocess.run('teqc ' + self.filename, capture_output=True, encoding='utf-8')
+            while check.stdout == '':
+                if self.filename == '':
+                    del self.filename
+                    self.statusbar["text"] = 'Waiting for input...'
+                    break
+                else:
+                    self.scrltxt.insert(INSERT, check.stderr)
+                    tkinter.messagebox.showerror('Warning', 'File not selected or selected in incorrect format')
+                    self.filename = askopenfilename()
+                    check = subprocess.run('teqc ' + self.filename, capture_output=True, encoding='utf-8')
+            if self.filename:
+                self.statusbar["text"] = 'File: ' + self.filename.split('\\')[-1] + ' successfully opened.'
+                return(self.filename)
+                
+        except AttributeError:
+            self.attribute_error()
+
         
     def convert(self):
         try:
+            input_file = self.filename
             self.saved_filename = asksaveasfilename()
-            print('teqc ' + self.filename + ' > ' + self.saved_filename)
-            conv = subprocess.run('teqc ' + self.filename + ' > ' + self.saved_filename, capture_output=True, encoding='utf-8', shell = True)
+            print('teqc ' + input_file + ' > ' + self.saved_filename)
+            conv = subprocess.run('teqc ' + input_file + ' > ' + self.saved_filename, capture_output=True, encoding='utf-8', shell = True)
             print(conv.stderr)
             self.scrltxt.insert(INSERT, conv.stdout)
             self.scrltxt.insert(INSERT, 'Conversion ended with success.\n')
-            self.filename = self.saved_filename
+            self.filename = self.saved_filename.replace('/', '\\')
             self.statusbar["text"] = 'File: ' + self.filename.split('\\')[-1] + ' successfully opened.'
         except AttributeError:
             self.attribute_error()
@@ -398,7 +403,7 @@ class Application(Tk):
             nav_file = asksaveasfilename(title = "Select navigation file name")
             subprocess.run('teqc +nav ' + nav_file + ' ' + input_file + ' > ' + obs_file, capture_output=True, encoding='utf-8', shell = True)
             self.scrltxt.insert(INSERT, 'Conversion ended with success.\n')
-            self.filename = obs_file
+            self.filename = obs_file.replace('/', '\\')
             self.statusbar["text"] = 'File: ' + self.filename.split('\\')[-1] + ' successfully opened.'
         except AttributeError:
             self.attribute_error()
@@ -408,11 +413,12 @@ class Application(Tk):
             format_check = subprocess.run('teqc +mdf ' + self.filename, capture_output=True, encoding='utf-8')
             self.scrltxt2.insert(INSERT, format_check.stdout)
             print(format_check.stdout.split()[-1])
+            return(format_check.stdout)
         except AttributeError:
             self.attribute_error()
         except UnboundLocalError:
             self.attribute_error()
-        return(format_check.stdout)
+        
             
     def about_program(self):
         tkinter.messagebox.showinfo('About', 'An application for satellite data edit and analyze based on existing open-source application teqc and plotting script teqcplot.py.\nDeveloped by Maciej Miliszewski\nWarsaw University of Technology\nPoland')
@@ -422,7 +428,12 @@ class Application(Tk):
     
     def rinex_header_modify(self):
         try:
+            if not self.filename:
+                raise AttributeError
             self.saved_filename = asksaveasfilename()
+            if not self.saved_filename:
+                tkinter.messagebox.showerror('Warning', 'Please choose saved file name first')
+                return
             com_list = []
             sat_list = {'-G', '-R', '-E', '-C', '-S', '-J'}
             var_list = [('-O.s ', self.satellite_system_entry.get()),
@@ -439,10 +450,7 @@ class Application(Tk):
             ('-O.px[WGS84xyz,m] ', self.appposx_entry.get(), self.appposy_entry.get(), self.appposz_entry.get()),
             ('-O.pe[hEN,m] ', self.antennadh_entry.get(), self.antennade_entry.get(), self.antennadn_entry.get()),
             ('-O.c ', self.comment_entry.get())]
-            
-            if not self.filename:
-                raise AttributeError
-                
+             
             for i in var_list:
                 if i[1]:
                     if i[0] == '-O.s ':
@@ -476,6 +484,8 @@ class Application(Tk):
                 self.saved_filename = asksaveasfilename()
                 subprocess.run('teqc -O.dec ' + str(int(self.interval_entry.get())) + ' ' + self.filename + ' > ' + self.saved_filename, capture_output=True, encoding='utf-8', shell = True)
                 self.scrltxt.insert(INSERT, 'Decimation ended with success.\n')
+            else:
+                self.attribute_error()
         except AttributeError:
             self.attribute_error()
         except ValueError:
@@ -483,20 +493,24 @@ class Application(Tk):
         
     def time_windowing(self):
         try:
-            self.saved_filename = asksaveasfilename()
+            if not self.filename:
+                raise AttributeError
+            
             com_list = []
             var_list = [('-st ', self.ins_time_entry.get()),
             ('-dm ', self.time_per_entry.get())]
             
-            if not self.filename:
-                raise AttributeError
+            if var_list[0][1] or var_list [1][1]:
+                self.saved_filename = asksaveasfilename()
                 
-            for i in var_list:
-                if i[1]:
-                    com_list.append(i[0] + i[1])
-
-            subprocess.run('teqc ' + ' '.join(com_list) + ' ' + self.filename + ' > ' + self.saved_filename, capture_output=True, encoding='utf-8', shell = True)
-            self.scrltxt.insert(INSERT, 'Time windowing ended with success.\n')
+                for i in var_list:
+                    if i[1]:
+                        com_list.append(i[0] + i[1])
+    
+                subprocess.run('teqc ' + ' '.join(com_list) + ' ' + self.filename + ' > ' + self.saved_filename, capture_output=True, encoding='utf-8', shell = True)
+                self.scrltxt.insert(INSERT, 'Time windowing ended with success.\n')
+            else:
+                tkinter.messagebox.showerror('Warning', 'Please insert value first')
         except AttributeError:
             self.attribute_error()
         except ValueError:
