@@ -24,7 +24,7 @@ pip install -r requirements.txt
 ```
 As complete list of required packages is provided in the file requirements.txt.
 
-Teqc EasyGUI has been written for Windows users, though I think it is possible to run it on other platforms. In order to do that you just need to replace the teqc executable file teqc.exe with file executable on your platform available on teqc website.
+Teqc EasyGUI has been written previously only for Windows users, but now supports Linux as well.
 If you are running Arch or Arch-based Linux distribution it is probable that you don't have tk installed in python interpreter and then you have to install it separately:
 ```bash
 sudo pacman -S tk
