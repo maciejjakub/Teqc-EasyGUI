@@ -29,6 +29,11 @@ If you are running Arch or Arch-based Linux distribution it is probable that you
 ```bash
 sudo pacman -S tk
 ```
+Or:
+```bash
+pip3 install tk
+```
+
 
 Features
 ====
